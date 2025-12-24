@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Story</title>
+    <style>
+        :root {
+            --color-red-500: rgba(220, 38, 38, 1);
+            --color-red-600: rgba(185, 28, 28, 1);
+            --color-red-700: rgba(159, 18, 18, 1);
+            --color-black: rgba(20, 20, 20, 1);
+            --color-dark-gray: rgba(40, 40, 40, 1);
+            --color-white: rgba(255, 255, 255, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(-45deg, #1a1a1a, #2d2d2d, #0f0f0f, #1f1f1f);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            color: var(--color-white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(220, 38, 38, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(220, 38, 38, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            animation: pulseGlow 4s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 50px 40px;
+            border-radius: 20px;
+            border: 2px solid rgba(220, 38, 38, 0.3);
+            box-shadow: 0 20px 60px rgba(220, 38, 38, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .message {
+            font-size: 28px;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInScale 0.7s ease-out;
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.05));
+            padding: 30px;
+            border-radius: 12px;
+            border-left: 4px solid var(--color-red-500);
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .button-container {
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 14px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--color-red-500), var(--color-red-600));
+            color: var(--color-white);
+            border: 2px solid var(--color-red-600);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, var(--color-red-600), var(--color-red-700));
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(220, 38, 38, 0.5);
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:active {
+            background: var(--color-red-700);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="message" id="message">Добро пожаловать в историю...</div>
+        <div class="button-container">
+            <button id="nextBtn">Далее</button>
+        </div>
+    </div>
+
+    <script>
+        // Массив сообщений
+        const messages = [
+            "Добро пожаловать в историю...",
+            "Нажми кнопку, чтобы продолжить",
+            "Вот третье сообщение появилось",
+            "И четвёртое сообщение появляется автоматически через 3 секунды",
+            "История продолжается...",
+            "Спасибо за внимание! 🎉"
+        ];
+
+        let currentMessageIndex = 0;
+        const messageElement = document.getElementById('message');
+        const nextBtn = document.getElementById('nextBtn');
+
+        // Функция для отображения сообщения
+        function displayMessage(index) {
+            if (index < messages.length) {
+                messageElement.textContent = messages[index];
+                currentMessageIndex = index;
+
+                // Для определённых сообщений показываем кнопку, для других - скрываем
+                if (index === messages.length - 1) {
+                    nextBtn.textContent = 'Заново';
+                    nextBtn.style.display = 'block';
+                } else if (index === 2 || index === 3) {
+                    // После 3-го сообщения кнопка исчезает и появляется 4-е автоматически
+                    if (index === 2) {
+                        nextBtn.style.display = 'block';
+                    } else if (index === 3) {
+                        nextBtn.style.display = 'none';
+                    }
+                } else {
+                    nextBtn.style.display = 'block';
+                }
+            }
+        }
+
+        // Обработчик нажатия на кнопку
+        nextBtn.addEventListener('click', function() {
+            currentMessageIndex++;
+
+            if (currentMessageIndex < messages.length) {
+                displayMessage(currentMessageIndex);
+
+                // Если это 3-е сообщение, показываем кнопку
+                if (currentMessageIndex === 2) {
+                    nextBtn.style.display = 'block';
+                }
+                // Если это 3-е сообщение (индекс 2), то после нажатия кнопки ждём и показываем 4-е
+                else if (currentMessageIndex === 3) {
+                    nextBtn.style.display = 'none';
+                    setTimeout(() => {
+                        displayMessage(currentMessageIndex + 1);
+                        // После автоматического сообщения показываем кнопку снова
+                        setTimeout(() => {
+                            nextBtn.style.display = 'block';
+                        }, 1000);
+                    }, 3000);
+                    return;
+                }
+            } else {
+                // Перезагрузка страницы
+                currentMessageIndex = 0;
+                displayMessage(currentMessageIndex);
+                nextBtn.style.display = 'block';
+            }
+        });
+
+        // Инициализация
+        displayMessage(0);
+    </script>
+</body>
+</html>
